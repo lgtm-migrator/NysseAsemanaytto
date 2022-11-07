@@ -1,4 +1,5 @@
-from typing import Any, Callable, Generator, Iterable, Sequence, TypeVar
+from typing import Any, Callable, Generator, Iterable, NamedTuple, Sequence, TypeVar
+from typing_extensions import Self
 from digitransit.enums import Mode, RealtimeState
 import json
 import requests
@@ -6,6 +7,14 @@ from datetime import datetime
 
 _T = TypeVar("_T")
 
+
+class Coordinate(NamedTuple):
+    latitude: float
+    longitude: float
+
+    @classmethod
+    def from_shortnames(cls, lat: float, lon: float) -> Self:
+        return cls(latitude=lat, longitude=lon)
 
 class Alert:
     def __init__(self, feed: str | None, alertHeaderText: str | None, alertDescriptionText: str, route: dict[str, Any] | None, stop: dict[str, Any] | None) -> None:
@@ -29,10 +38,12 @@ class Stoptime:
         self.trip: Trip | None = Trip(**trip) if trip is not None else None
 
 class Stop:
-    def __init__(self, gtfsId: str, name: str, vehicleMode: str | None, stoptimesWithoutPatterns: Sequence[dict[str, Any]] | None = None) -> None:
+    def __init__(self, gtfsId: str, name: str, vehicleMode: str | None, lat: float, lon: float, stoptimesWithoutPatterns: Sequence[dict[str, Any]] | None = None) -> None:
         self.gtfsId: str = gtfsId
         self.name: str = name
         self.vehicleMode: Mode | None = Mode(vehicleMode) if vehicleMode is not None else None
+
+        self.coordinate: Coordinate = Coordinate(latitude=lat, longitude=lon)
 
         self.stoptimes: list[Stoptime] | None = None
         if stoptimesWithoutPatterns is not None:
@@ -54,6 +65,12 @@ class Trip:
         self.gtfsId: str = gtfsId
         self.route: Route = Route(**route)
 
+class PatternGeometry:
+    def __init__(self) -> None:
+        self.name: str =
+        self.stops: list[Stop] = [Stop(**stop) for stop in stops]
+        self.geometry: list[Coordinate] = [Coordinate.from_shortnames(**coordinate) for coordinate in geometry]
+
 
 def get_stop_info(endpoint: str, stop_gtfsId: str, numberOfDepartures: int | None = None, omitNonPickups: bool | None = None) -> Stop:
     query = """{
@@ -61,6 +78,8 @@ def get_stop_info(endpoint: str, stop_gtfsId: str, numberOfDepartures: int | Non
     gtfsId
     name
     vehicleMode
+    lat
+    lon
     stoptimesWithoutPatterns(TIMESARGS) {
       scheduledArrival
       realtimeArrival
@@ -110,6 +129,8 @@ def get_alerts(endpoint: str, feeds: list[str] | tuple[str, ...]) -> list[Alert]
         gtfsId
         name
         vehicleMode
+        lat
+        lon
       }
     }
   }
@@ -121,6 +142,8 @@ def get_alerts(endpoint: str, feeds: list[str] | tuple[str, ...]) -> list[Alert]
         return [Alert(**params) for params in data["alerts"]]
 
     return _make_request(endpoint, query, None, constructor)
+
+def get_pattern_geometry() ->
 
 
 def _make_request(endpoint: str, query: str, expected_data_key: str | None, constructor: Callable[..., _T]) -> _T:

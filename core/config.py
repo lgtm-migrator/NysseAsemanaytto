@@ -26,6 +26,9 @@ class Config:
     omit_non_pickups: bool = True
     """Only show departures where boarding is allowed."""
 
+    omit_canceled: bool = False
+    """Hide canceled departures."""
+
     poll_rate: int = 30
     """How often to refresh the departure data. Waits the specified amount of seconds between requests. (If you are not self-hosting the server, you should avoid doing more than 10 requests per second to reduce load on Digitransit's servers.)"""
 

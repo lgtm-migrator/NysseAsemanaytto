@@ -13,7 +13,12 @@ class Coordinate(NamedTuple):
     longitude: float
 
     @classmethod
-    def from_shortnames(cls, lat: float, lon: float) -> Self:
+    def create_from_json(cls, lat: Any, lon: Any) -> Self:
+        if not isinstance(lat, int | float):
+            raise ValueError("Latitude is not a number!")
+        if not isinstance(lon, int | float):
+            raise ValueError("Longitude is not a number!")
+
         return cls(latitude=lat, longitude=lon)
 
 class Alert:
@@ -66,13 +71,13 @@ class Trip:
         self.route: Route = Route(**route)
 
 class PatternGeometry:
-    def __init__(self) -> None:
-        self.name: str =
+    def __init__(self, name: str, stops: Sequence[dict[str, Any]], geometry: Sequence[dict[str, Any]]) -> None:
+        self.name: str = name
         self.stops: list[Stop] = [Stop(**stop) for stop in stops]
-        self.geometry: list[Coordinate] = [Coordinate.from_shortnames(**coordinate) for coordinate in geometry]
+        self.geometry: list[Coordinate] = [Coordinate.create_from_json(**coordinate) for coordinate in geometry]
 
 
-def get_stop_info(endpoint: str, stop_gtfsId: str, numberOfDepartures: int | None = None, omitNonPickups: bool | None = None) -> Stop:
+def get_stop_info(endpoint: str, stop_gtfsId: str, numberOfDepartures: int | None = None, omitNonPickups: bool | None = None, omitCanceled: bool | None = None) -> Stop:
     query = """{
   stop(STOPARGS) {
     gtfsId
@@ -105,7 +110,7 @@ def get_stop_info(endpoint: str, stop_gtfsId: str, numberOfDepartures: int | Non
 }
 """
     query = _replace_with_arguments(query, "(STOPARGS)", ("id", stop_gtfsId))
-    query = _replace_with_arguments(query, "(TIMESARGS)", ("numberOfDepartures", numberOfDepartures), ("omitNonPickups", omitNonPickups))
+    query = _replace_with_arguments(query, "(TIMESARGS)", ("numberOfDepartures", numberOfDepartures), ("omitNonPickups", omitNonPickups), ("omitCanceled", omitCanceled))
 
     return _make_request(endpoint, query, "stop", Stop)
 
@@ -119,6 +124,8 @@ def get_alerts(endpoint: str, feeds: list[str] | tuple[str, ...]) -> list[Alert]
       gtfsId
       name
       vehicleMode
+      lat
+      lon
     }
     route {
       gtfsId
@@ -143,7 +150,26 @@ def get_alerts(endpoint: str, feeds: list[str] | tuple[str, ...]) -> list[Alert]
 
     return _make_request(endpoint, query, None, constructor)
 
-def get_pattern_geometry() ->
+def get_pattern_geometry(endpoint: str, code: str) -> PatternGeometry:
+    query = """{
+pattern(PATTERNARGS) {
+    name
+    stops {
+      gtfsId
+      name
+      vehicleMode
+      lat
+      lon
+    }
+    geometry {
+      lat
+      lon
+    }
+  }
+}"""
+    query = _replace_with_arguments(query, "(PATTERNARGS)", ("id", code))
+
+    return _make_request(endpoint, query, "pattern", PatternGeometry)
 
 
 def _make_request(endpoint: str, query: str, expected_data_key: str | None, constructor: Callable[..., _T]) -> _T:

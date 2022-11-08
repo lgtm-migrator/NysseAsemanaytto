@@ -32,8 +32,10 @@ class Embed(ABC):
 
 from embeds.alert_embed import AlertEmbed
 from embeds.weather_embed import WeatherEmbed
+from embeds.line_embed import LineEmbed
 
 ALL_EMBEDS: tuple[type[Embed], ...] = (
     WeatherEmbed,
-    AlertEmbed
+    AlertEmbed,
+    LineEmbed
 )

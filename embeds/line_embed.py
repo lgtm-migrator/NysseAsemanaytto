@@ -1,6 +1,6 @@
 from __future__ import annotations
 import datetime
-from typing import Sequence
+from typing import Iterable, Sequence
 
 import embeds
 import digitransit.routing
@@ -47,6 +47,7 @@ class LineEmbed(embeds.Embed):
             rendered: pygame.Surface | None = render_line_for_pattern(trip.patternCode, surface_size)
             if rendered is None:
                 logging.error("Map line could not be rendered.")
+                return
             else:
                 line_render_cache[trip.patternCode] = rendered
 
@@ -61,7 +62,7 @@ class LineEmbed(embeds.Embed):
 
 last_render_cache_clear: datetime.datetime | None = None
 line_render_cache_size: tuple[int, int] | None = None
-line_render_cache: dict[str, pygame.Surface]
+line_render_cache: dict[str, pygame.Surface] = {}
 
 def _remapPoints(unscaled_points: Sequence[math.Vector2], size: tuple[float, float], padding: float) -> list[math.Vector2]:
     unscaled_x: list[float] = [p.x for p in unscaled_points]
@@ -84,8 +85,16 @@ def _remapPoints(unscaled_points: Sequence[math.Vector2], size: tuple[float, flo
 
     return [remapper(p) for p in unscaled_points]
 
+def _draw_joined_aalines(surface: pygame.Surface, color: tuple[int, int, int], points: Iterable[math.Vector2], thickness: int):
+    old_rect: math.Rect | None = None
+
+    for p in points:
+        rect = math.Rect.
+
+
 def render_line_for_pattern(patternCode: str, size: tuple[int, int]) -> pygame.Surface | None:
-    PADDING = size[1] / 10
+    PADDING: float = size[1] / 10
+    LINE_THICKNESS: float = max(size[1] / 30, 0)
 
     pattern_geometry: digitransit.routing.PatternGeometry
     try:
@@ -99,8 +108,8 @@ def render_line_for_pattern(patternCode: str, size: tuple[int, int]) -> pygame.S
 
     surface: pygame.Surface = pygame.Surface(size)
     surface.fill((255, 255, 255))
-    raise NotImplementedError()
-    pygame.draw.lines(surface, ())
+    pygame.draw.aalines(surface, (255, 0, 0), False, [p.to_int_tuple() for p in points], round(LINE_THICKNESS))
+    return surface
 
 
 lonlat_to_webmercator: pyproj.Transformer = pyproj.Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)

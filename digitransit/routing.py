@@ -1,5 +1,4 @@
-from typing import Any, Callable, Generator, Iterable, NamedTuple, Sequence, TypeVar
-from typing_extensions import Self
+from typing import Any, Callable, NamedTuple, Sequence, TypeVar, Self
 from digitransit.enums import Mode, RealtimeState
 import json
 import requests

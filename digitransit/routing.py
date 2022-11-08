@@ -21,6 +21,9 @@ class Coordinate(NamedTuple):
 
         return cls(latitude=lat, longitude=lon)
 
+class _PatternCodeWrapper(NamedTuple):
+    code: str
+
 class Alert:
     def __init__(self, feed: str | None, alertHeaderText: str | None, alertDescriptionText: str, route: dict[str, Any] | None, stop: dict[str, Any] | None) -> None:
         self.feed: str | None = feed
@@ -66,8 +69,9 @@ class Route:
             self.stops = [Stop(**stop) for stop in stops]
 
 class Trip:
-    def __init__(self, gtfsId: str, route: dict[str, Any]) -> None:
+    def __init__(self, gtfsId: str, pattern: dict[str, Any], route: dict[str, Any]) -> None:
         self.gtfsId: str = gtfsId
+        self.patternCode: str = _PatternCodeWrapper(**pattern).code
         self.route: Route = Route(**route)
 
 class PatternGeometry:
@@ -98,6 +102,9 @@ def get_stop_info(endpoint: str, stop_gtfsId: str, numberOfDepartures: int | Non
       headsign
       trip {
         gtfsId
+        pattern {
+          code
+        }
         route {
           gtfsId
           shortName

@@ -16,7 +16,7 @@ class Embed(ABC):
         pass
 
     @abstractmethod
-    def render(self, surface: pygame.Surface, content_spacing: int, progress: float):
+    def render(self, surface: pygame.Surface, content_spacing: int, approx_datetime: datetime.datetime, progress: float):
         pass
 
     @staticmethod
